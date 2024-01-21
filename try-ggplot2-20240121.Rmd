@@ -1,0 +1,173 @@
+---
+title: "随心所欲地运用ggplot2画图"
+output: html_notebook
+---
+
+## 1. 画一个黑点
+
+```{r, warning=FALSE, message=FALSE, fig.width=3, fig.height=3}
+library(tidyverse)
+
+# 构造数据
+df = data_frame(x = 0, y = 0)  # 仅有一个点，位于原点位置
+
+# 绘图
+ggplot() +
+  geom_point(data = df, aes(x, y)) +  # 画点
+  coord_fixed(xlim = c(-1, 1),
+              ylim = c(-1, 1)) +      # 控制图像范围
+  theme_void()                        # 去掉坐标轴等内容
+```
+
+## 2. 调整黑点大小
+
+```{r, warning=FALSE, message=FALSE, fig.width=3, fig.height=3}
+ggplot() +
+  geom_point(data = df, aes(x, y), size = 20) +  # 设置点的大小
+  coord_fixed(xlim = c(-1, 1),
+              ylim = c(-1, 1)) +
+  theme_void()
+```
+
+
+## 3. 画圆（基于画多边形）
+
+```{r, warning=FALSE, message=FALSE, fig.width=3, fig.height=3}
+df = data_frame(t = seq(0, 2 * pi, length.out=100)) %>%  # 构造基础序列t
+  mutate(x = cos(t),
+         y = sin(t))  # 使用标准圆曲线，基于t获得相应x, y坐标
+
+ggplot() +
+  geom_polygon(data = df, aes(x, y),
+               color = "black",
+               fill = "blue") +  # 画多边形（按顺序描出曲线，并填充）
+  coord_fixed(xlim = c(-1, 1),
+              ylim = c(-1, 1)) +
+  theme_void()
+```
+
+## 4. 画椭圆
+
+```{r, warning=FALSE, message=FALSE, fig.width=3, fig.height=3}
+width = 0.8   # 椭圆宽
+height = 0.5  # 椭圆高
+
+df = data_frame(t = seq(0, 2 * pi, length.out=100)) %>%
+  mutate(x = cos(t) * width,
+         y = sin(t) * height)  # 调整椭圆的宽和高
+
+ggplot() +
+  geom_polygon(data = df, aes(x, y),
+               color = "black", fill = "red") +
+  coord_fixed(xlim = c(-1, 1),
+              ylim = c(-1, 1)) +
+  theme_void()
+```
+
+## 5. 平移并旋转椭圆
+
+```{r, warning=FALSE, message=FALSE, fig.width=3, fig.height=3}
+width = 0.8
+height = 0.5
+dx = 0.3   # 水平平移
+dy = -0.1  # 垂直平移
+theta = pi / 6   # 旋转角度
+
+df = data_frame(t = seq(0, 2 * pi, length.out=100)) %>%
+  mutate(x0 = sin(t) * width,
+         y0 = cos(t) * height,  # 先计算原始坐标
+         x = dx + x0 * cos(theta) - y0 * sin(theta),
+         y = dy + x0 * sin(theta) + y0 * cos(theta))  # 平移并旋转
+
+ggplot() +
+  geom_polygon(data = df, aes(x, y),
+               color = "black", fill = "green") +
+  coord_fixed(xlim = c(-1, 1),
+              ylim = c(-1, 1)) +
+  theme_void()
+```
+
+## 6. 画扇形
+
+```{r, warning=FALSE, message=FALSE, fig.width=3, fig.height=3}
+start_angle = pi / 6  # 扇形起始角度
+end_angle = pi / 3    # 扇形终止角度
+
+df = data_frame(t = seq(start_angle, end_angle,
+                        length.out=100)) %>%  # 调整起始和终止
+  mutate(x = sin(t),
+         y = cos(t)) %>%
+  rbind(data_frame(t = 0, x = 0, y = 0))  # 增加一个原点
+
+ggplot() +
+  geom_polygon(data = df, aes(x, y),
+               color = "black", fill = "brown") +
+  coord_fixed(xlim = c(-1, 1),
+              ylim = c(-1, 1)) +
+  theme_void()
+```
+
+### 7. 绘制螺旋渐开线
+
+```{r, warning=FALSE, message=FALSE, fig.width=3, fig.height=3}
+df = data_frame(t = seq(0, 6 * pi, length.out = 1000)) %>% # 绕三圈
+  mutate(x = t * cos(t),
+         y = t * sin(t))  # 螺旋渐开线
+
+ggplot() +
+  geom_path(data = df, aes(x, y)) +
+  coord_fixed() +
+  theme_void()
+```
+
+### 7. 绘制心形图
+
+```{r, warning=FALSE, message=FALSE, fig.width=3, fig.height=3}
+df = data_frame(t = seq(0, 2*pi, length.out=1000)) %>%
+  mutate(x = 16 * sin(t)^3,
+         y = 13 * cos(t) - 5 * cos(2*t) - 2 * cos(3*t) - cos(4*t))  # 心形线
+
+ggplot() +
+  geom_line(data = df, aes(x, y), color = "red") +
+  coord_fixed() +
+  theme_void()
+```
+
+### 8. 环绕圆圈画文字
+
+```{r, warning=FALSE, message=FALSE, fig.width=3, fig.height=3}
+text = "用ggplot画环绕曲线文字很容易"
+n = nchar(text)
+chars = strsplit(text, '')[[1]]
+theta = seq(0, 2 * pi, length.out = n + 1)[-(n + 1)]  # 为避免首尾文字重叠，这里先
+                                                      # 多生成一个数，再去掉最后一个
+
+df = data_frame(t = theta) %>%
+  mutate(x = cos(t),
+         y = sin(t),
+         txt = chars)
+
+ggplot() +
+  geom_text(data = df, aes(x, y, label = txt)) +
+  coord_fixed() +
+  theme_void()
+```
+
+### 9. 环绕曲线画文字
+
+```{r, warning=FALSE, message=FALSE, fig.width=5, fig.height=5}
+text = "晋太元中，武陵人捕鱼为业，缘溪行，忘路之远近。忽逢桃花林，夹岸数百步，中无杂树，芳草鲜美，落英缤纷，渔人甚异之。复前行，欲穷其林。林尽水源，便得一山，山有小口，仿佛若有光，便舍船从口入。初极狭，才通人，复行数十步，豁然开朗。土地平旷，屋舍俨然，有良田美池桑竹之属。阡陌交通，鸡犬相闻。其中往来种作，男女衣著，悉如外人。黄发垂髫，并怡然自乐。"
+n = nchar(text)
+chars = strsplit(text, '')[[1]]
+theta = seq(6 * pi, 12 * pi, length.out = n)
+
+df = data_frame(t = theta) %>%
+  mutate(x = t * cos(t),
+         y = t * sin(t),
+         txt = chars)
+
+ggplot() +
+  geom_text(data = df, aes(x, y, label = txt)) +
+  coord_fixed() +
+  theme_void()
+```
